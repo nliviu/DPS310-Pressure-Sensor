@@ -1,4 +1,7 @@
 #include "DpsClass.h"
+
+#include "mgos_i2c.h"
+
 using namespace dps;
 
 const int32_t DpsClass::scaling_facts[DPS__NUM_OF_SCAL_FACTS] = {
@@ -16,21 +19,21 @@ DpsClass::~DpsClass(void) {
   end();
 }
 
-void DpsClass::begin(TwoWire &bus) {
+void DpsClass::begin(struct mgos_i2c *bus) {
   begin(bus, DPS__STD_SLAVE_ADDRESS);
 }
 
-void DpsClass::begin(TwoWire &bus, uint8_t slaveAddress) {
+void DpsClass::begin(struct mgos_i2c *bus, uint8_t slaveAddress) {
   // this flag will show if the initialization was successful
   m_initFail = 0U;
 
   // Set I2C bus connection
   m_SpiI2c = 1U;
-  m_i2cbus = &bus;
+  m_i2cbus = bus;
   m_slaveAddress = slaveAddress;
 
   // Init bus
-  m_i2cbus->begin();
+  // m_i2cbus->begin();
 
   delay(50);  // startup time of Dps310
 
@@ -481,6 +484,7 @@ int16_t DpsClass::readByte(uint8_t regAddress) {
   }
 #endif
 
+#if 0
   m_i2cbus->beginTransmission(m_slaveAddress);
   m_i2cbus->write(regAddress);
   m_i2cbus->endTransmission(false);
@@ -490,6 +494,9 @@ int16_t DpsClass::readByte(uint8_t regAddress) {
   } else {
     return DPS__FAIL_UNKNOWN;  // if 0 bytes were read successfully
   }
+#endif
+  int value = mgos_i2c_read_reg_b(m_i2cbus, m_slaveAddress, regAddress);
+  return (value < 0) ? DPS__FAIL_UNKNOWN : value;
 }
 
 #ifndef DPS_DISABLESPI
@@ -564,6 +571,7 @@ int16_t DpsClass::writeByte(uint8_t regAddress, uint8_t data, uint8_t check) {
     return writeByteSpi(regAddress, data, check);
   }
 #endif
+#if 0
   m_i2cbus->beginTransmission(m_slaveAddress);
   m_i2cbus->write(regAddress);           // Write Register number to buffer
   m_i2cbus->write(data);                 // Write data to buffer
@@ -578,6 +586,18 @@ int16_t DpsClass::writeByte(uint8_t regAddress, uint8_t data, uint8_t check) {
     } else {
       return DPS__FAIL_UNKNOWN;
     }
+  }
+#endif
+  bool ok = mgos_i2c_write_reg_b(m_i2cbus, m_slaveAddress, regAddress, data);
+  if (ok) {
+    if (check == 0) {
+      return DPS__SUCCEEDED;
+    } else {
+      ok = readByte(regAddress) == data;
+      return ok ? DPS__SUCCEEDED : DPS__FAIL_UNKNOWN;
+    }
+  } else {
+    return DPS__FAIL_UNKNOWN;
   }
 }
 
@@ -658,7 +678,7 @@ int16_t DpsClass::readBlock(RegBlock_t regBlock, uint8_t *buffer) {
   if (buffer == NULL) {
     return 0;  // 0 bytes read successfully
   }
-
+#if 0
   m_i2cbus->beginTransmission(m_slaveAddress);
   m_i2cbus->write(regBlock.regAddress);
   m_i2cbus->endTransmission(false);
@@ -669,6 +689,10 @@ int16_t DpsClass::readBlock(RegBlock_t regBlock, uint8_t *buffer) {
     buffer[count] = m_i2cbus->read();
   }
   return ret;
+#endif
+  bool ok = mgos_i2c_read_reg_n(m_i2cbus, m_slaveAddress, regBlock.regAddress,
+                                regBlock.length, buffer);
+  return ok ? DPS__SUCCEEDED : DPS__FAIL_UNKNOWN;
 }
 
 void DpsClass::getTwosComplement(int32_t *raw, uint8_t length) {

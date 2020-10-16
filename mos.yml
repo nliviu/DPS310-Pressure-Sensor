@@ -14,7 +14,7 @@ sources:
 config_schema:
 
 libs:
-  - origin: https://github.com/mongoose-os-libs/arduino-wire  
+  - origin: https://github.com/mongoose-os-libs/i2c
   - origin: https://github.com/mongoose-os-libs/arduino-spi
   
 build_vars:
