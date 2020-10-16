@@ -6,7 +6,7 @@ using namespace dps422;
 ////////   public  /////////
 
 int16_t Dps422::measureBothOnce(float &prs, float &temp) {
-  measureBothOnce(prs, temp, m_prsOsr, m_tempOsr);
+  return measureBothOnce(prs, temp, m_prsOsr, m_tempOsr);
 }
 
 int16_t Dps422::measureBothOnce(float &prs, float &temp, uint8_t prs_osr,
@@ -26,15 +26,16 @@ int16_t Dps422::measureBothOnce(float &prs, float &temp, uint8_t prs_osr,
   setOpMode(CMD_BOTH);
   delay(((calcBusyTime(0U, m_tempOsr) + calcBusyTime(0U, m_prsOsr)) /
          DPS__BUSYTIME_SCALING));
+  int16_t ret = 0;
   // config_registers defined in namespace dps
   int16_t rdy = readByteBitfield(config_registers[PRS_RDY]) &
                 readByteBitfield(config_registers[TEMP_RDY]);
   switch (rdy) {
     case DPS__FAIL_UNKNOWN:  // could not read ready flag
-      return DPS__FAIL_UNKNOWN;
+      ret = DPS__FAIL_UNKNOWN;
     case 0:  // ready flag not set, measurement still in progress
       standby();
-      return DPS__FAIL_UNFINISHED;
+      ret = DPS__FAIL_UNFINISHED;
     case 1:  // measurement ready, expected case
       m_opMode = IDLE;
       int32_t raw_temp;
@@ -44,8 +45,9 @@ int16_t Dps422::measureBothOnce(float &prs, float &temp, uint8_t prs_osr,
         return DPS__FAIL_UNKNOWN;
       prs = calcPressure(raw_psr);
       temp = calcTemp(raw_temp);
-      return DPS__SUCCEEDED;
+      ret = DPS__SUCCEEDED;
   }
+  return ret;
 }
 
 int16_t Dps422::getContResults(float *tempBuffer, uint8_t &tempCount,

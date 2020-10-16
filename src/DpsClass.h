@@ -86,8 +86,8 @@ class DpsClass {
   /**
    * performs one temperature measurement
    *
-   * @param &result:		reference to a float value where the result will be
-   * written
+   * @param &result:		reference to a float value where the result will
+   * be written
    * @return 	status code
    */
   int16_t measureTempOnce(float &result);
@@ -95,8 +95,8 @@ class DpsClass {
   /**
    * performs one temperature measurement with specified oversamplingRate
    *
-   * @param &result:				reference to a float where the result will be
-   * written
+   * @param &result:				reference to a float where the result will
+   * be written
    * @param oversamplingRate: 	DPS__OVERSAMPLING_RATE_1,
    * DPS__OVERSAMPLING_RATE_2, DPS__OVERSAMPLING_RATE_4 ...
    * DPS__OVERSAMPLING_RATE_128, which are defined as integers 0 - 7 The number
@@ -127,8 +127,8 @@ class DpsClass {
   /**
    * performs one pressure measurement
    *
-   * @param &result:		reference to a float value where the result will be
-   * written
+   * @param &result:		reference to a float value where the result will
+   * be written
    * @return 	status code
    */
   int16_t measurePressureOnce(float &result);
@@ -136,8 +136,8 @@ class DpsClass {
   /**
    * performs one pressure measurement with specified oversamplingRate
    *
-   * @param &result:				reference to a float where the result will be
-   * written
+   * @param &result:				reference to a float where the result will
+   * be written
    * @param oversamplingRate: 	DPS__OVERSAMPLING_RATE_1,
    * DPS__OVERSAMPLING_RATE_2, DPS__OVERSAMPLING_RATE_4 ...
    * DPS__OVERSAMPLING_RATE_128
@@ -165,8 +165,8 @@ class DpsClass {
   /**
    * gets the result a single temperature or pressure measurement in °C or Pa
    *
-   * @param &result:		reference to a float value where the result will be
-   * written
+   * @param &result:		reference to a float value where the result will
+   * be written
    * @return 	status code
    */
   int16_t getSingleResult(float &result);
@@ -234,8 +234,8 @@ class DpsClass {
    * measurement
    *
    * @return 	1 if a finished temperature measurement caused an interrupt;
-   * 				0 if there is no finished temperature measurement or interrupts
-   * are disabled; -1 on fail.
+   * 				0 if there is no finished temperature measurement or
+   * interrupts are disabled; -1 on fail.
    */
   int16_t getIntStatusTempReady(void);
 
@@ -244,8 +244,8 @@ class DpsClass {
    * measurement
    *
    * @return 	1 if a finished pressure measurement caused an interrupt;
-   * 				0 if there is no finished pressure measurement or interrupts
-   * are disabled; -1 on fail.
+   * 				0 if there is no finished pressure measurement or
+   * interrupts are disabled; -1 on fail.
    */
   int16_t getIntStatusPrsReady(void);
 
@@ -318,8 +318,8 @@ class DpsClass {
   /**
    * Sets the Operation Mode of the sensor
    *
-   * @param opMode: 			the new OpMode as defined by dps::Mode; CMD_BOTH
-   * should not be used for DPS310
+   * @param opMode: 			the new OpMode as defined by dps::Mode;
+   * CMD_BOTH should not be used for DPS310
    * @return 			0 on success, -1 on fail
    */
   int16_t setOpMode(uint8_t opMode);
@@ -396,14 +396,14 @@ class DpsClass {
    * temperature results are written If this is NULL, no temperature results
    * will be written out
    * @param &tempCount:		The size of the buffer for temperature results.
-   * 					When the function ends, it will contain the number of bytes
-   * written to the buffer.
-   * @param *prsBuffer: 		The start address of the buffer where the pressure
-   * results are written If this is NULL, no pressure results will be written
-   * out
+   * 					When the function ends, it will contain the number of
+   * bytes written to the buffer.
+   * @param *prsBuffer: 		The start address of the buffer where the
+   * pressure results are written If this is NULL, no pressure results will be
+   * written out
    * @param &prsCount:		The size of the buffer for pressure results.
-   * 					When the function ends, it will contain the number of bytes
-   * written to the buffer.
+   * 					When the function ends, it will contain the number of
+   * bytes written to the buffer.
    * @param reg The FIFO empty register field; needed since this field is
    * different for each sensor
    * @return			status code
@@ -468,8 +468,8 @@ class DpsClass {
    *
    * @param regAdress: 	Address of the register that has to be updated
    * @param data:		Byte that will be written to the register
-   * @param check: 		If this is true, register content will be read after
-   * writing to check if update was successful
+   * @param check: 		If this is true, register content will be read
+   * after writing to check if update was successful
    * @return		0 if byte was written successfully
    * 				or -1 on fail
    */
@@ -481,8 +481,8 @@ class DpsClass {
    *
    * @param regAdress: 	Address of the register that has to be updated
    * @param data:		Byte that will be written to the register
-   * @param check: 		If this is true, register content will be read after
-   * writing to check if update was successful
+   * @param check: 		If this is true, register content will be read
+   * after writing to check if update was successful
    * @return		0 if byte was written successfully
    * 				or -1 on fail
    */
