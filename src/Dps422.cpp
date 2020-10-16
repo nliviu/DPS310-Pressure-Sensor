@@ -1,5 +1,7 @@
 #include "Dps422.h"
 
+#include "mgos_system.h"
+
 using namespace dps;
 using namespace dps422;
 
@@ -24,8 +26,8 @@ int16_t Dps422::measureBothOnce(float &prs, float &temp, uint8_t prs_osr,
   }
 
   setOpMode(CMD_BOTH);
-  delay(((calcBusyTime(0U, m_tempOsr) + calcBusyTime(0U, m_prsOsr)) /
-         DPS__BUSYTIME_SCALING));
+  mgos_msleep(((calcBusyTime(0U, m_tempOsr) + calcBusyTime(0U, m_prsOsr)) /
+               DPS__BUSYTIME_SCALING));
   int16_t ret = 0;
   // config_registers defined in namespace dps
   int16_t rdy = readByteBitfield(config_registers[PRS_RDY]) &

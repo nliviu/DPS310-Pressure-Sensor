@@ -1,6 +1,9 @@
 #include "DpsClass.h"
 
+#include "mgos_gpio.h"
 #include "mgos_i2c.h"
+#include "mgos_spi.h"
+#include "mgos_system.h"
 
 using namespace dps;
 
@@ -35,35 +38,39 @@ void DpsClass::begin(struct mgos_i2c *bus, uint8_t slaveAddress) {
   // Init bus
   // m_i2cbus->begin();
 
-  delay(50);  // startup time of Dps310
+  mgos_msleep(50);  // startup time of Dps310
 
   init();
 }
 
 #ifndef DPS_DISABLESPI
-void DpsClass::begin(SPIImpl &bus, int32_t chipSelect) {
+void DpsClass::begin(struct mgos_spi *bus, int32_t chipSelect) {
   begin(bus, chipSelect, 0U);
 }
 #endif
 
 #ifndef DPS_DISABLESPI
-void DpsClass::begin(SPIImpl &bus, int32_t chipSelect, uint8_t threeWire) {
+void DpsClass::begin(struct mgos_spi *bus, int32_t chipSelect,
+                     uint8_t threeWire) {
   // this flag will show if the initialization was successful
   m_initFail = 0U;
 
   // Set SPI bus connection
   m_SpiI2c = 0U;
-  m_spibus = &bus;
+  m_spibus = bus;
   m_chipSelect = chipSelect;
 
+#if 0
   // Init bus
   m_spibus->begin();
   m_spibus->setDataMode(SPI_MODE3);
 
   pinMode(m_chipSelect, OUTPUT);
   digitalWrite(m_chipSelect, HIGH);
+#endif
+  mgos_gpio_setup_output(m_chipSelect, true);
 
-  delay(50);  // startup time of Dps310
+  mgos_msleep(50);  // startup time of Dps310
 
   // switch to 3-wire mode if necessary
   // do not use writeByteBitfield or check option to set SPI mode!
@@ -194,8 +201,8 @@ int16_t DpsClass::measureTempOnce(float &result, uint8_t oversamplingRate) {
   }
 
   // wait until measurement is finished
-  delay(calcBusyTime(0U, m_tempOsr) / DPS__BUSYTIME_SCALING);
-  delay(DPS310__BUSYTIME_FAILSAFE);
+  mgos_msleep(calcBusyTime(0U, m_tempOsr) / DPS__BUSYTIME_SCALING);
+  mgos_msleep(DPS310__BUSYTIME_FAILSAFE);
 
   ret = getSingleResult(result);
   if (ret != DPS__SUCCEEDED) {
@@ -241,8 +248,8 @@ int16_t DpsClass::measurePressureOnce(float &result, uint8_t oversamplingRate) {
   }
 
   // wait until measurement is finished
-  delay(calcBusyTime(0U, m_prsOsr) / DPS__BUSYTIME_SCALING);
-  delay(DPS310__BUSYTIME_FAILSAFE);
+  mgos_msleep(calcBusyTime(0U, m_prsOsr) / DPS__BUSYTIME_SCALING);
+  mgos_msleep(DPS310__BUSYTIME_FAILSAFE);
 
   ret = getSingleResult(result);
   if (ret != DPS__SUCCEEDED) {
@@ -505,6 +512,7 @@ int16_t DpsClass::readByteSPI(uint8_t regAddress) {
   if (m_SpiI2c != 0) {
     return DPS__FAIL_UNKNOWN;
   }
+#if 0
   // mask regAddress
   regAddress &= ~DPS310__SPI_RW_MASK;
   // reserve and initialize bus
@@ -521,6 +529,26 @@ int16_t DpsClass::readByteSPI(uint8_t regAddress) {
   // close current SPI transaction
   m_spibus->endTransaction();
   // return received data
+#endif
+  // mask regAddress
+  regAddress = (regAddress & ~DPS310__SPI_RW_MASK) | DPS310__SPI_READ_CMD;
+  uint8_t ret;
+  struct mgos_spi_txn txn;
+  memset(&txn, 0, sizeof(txn));
+  txn.cs = -1;  /* Using m_chipSelect */
+  txn.mode = 3; /* Mode 3*/
+  txn.freq = DPS310__SPI_MAX_FREQ;
+  txn.hd.tx_data = &regAddress;
+  txn.hd.tx_len = 1;
+  txn.hd.rx_data = &ret;
+  txn.hd.rx_len = 1;
+  // enable ChipSelect for Dps310
+  mgos_gpio_write(m_chipSelect, false);
+  // execute SPI transaction
+  mgos_spi_run_txn(m_spibus, false, &txn);
+  // disable ChipSelect for Dps310
+  mgos_gpio_write(m_chipSelect, true);
+
   return ret;
 }
 #endif
@@ -535,6 +563,7 @@ int16_t DpsClass::readBlockSPI(RegBlock_t regBlock, uint8_t *buffer) {
   if (buffer == NULL) {
     return 0;  // 0 bytes were read successfully
   }
+#if 0
   // mask regAddress
   regBlock.regAddress &= ~DPS310__SPI_RW_MASK;
   // reserve and initialize bus
@@ -555,6 +584,24 @@ int16_t DpsClass::readBlockSPI(RegBlock_t regBlock, uint8_t *buffer) {
   digitalWrite(m_chipSelect, HIGH);
   // close current SPI transaction
   m_spibus->endTransaction();
+#endif
+  // mask regAddress
+  uint8_t regAddress =
+      (regBlock.regAddress & ~DPS310__SPI_RW_MASK) | DPS310__SPI_READ_CMD;
+  struct mgos_spi_txn txn;
+  memset(&txn, 0, sizeof(txn));
+  txn.cs = -1;  /* Using m_chipSelect */
+  txn.mode = 3; /* Mode 3*/
+  txn.freq = DPS310__SPI_MAX_FREQ;
+  txn.hd.dummy_len = 1;
+  txn.hd.tx_data = &regAddress;
+  txn.hd.tx_len = 1;
+  txn.hd.rx_data = buffer;
+  txn.hd.rx_len = regBlock.length;
+
+  mgos_gpio_write(m_chipSelect, false);
+  mgos_spi_run_txn(m_spibus, false, &txn);
+  mgos_gpio_write(m_chipSelect, true);
   // return received data
   return regBlock.length;
 }
@@ -609,6 +656,7 @@ int16_t DpsClass::writeByteSpi(uint8_t regAddress, uint8_t data,
     return DPS__FAIL_UNKNOWN;
   }
   // mask regAddress
+#if 0
   regAddress &= ~DPS310__SPI_RW_MASK;
   // reserve and initialize bus
   m_spibus->beginTransaction(
@@ -625,6 +673,22 @@ int16_t DpsClass::writeByteSpi(uint8_t regAddress, uint8_t data,
   digitalWrite(m_chipSelect, HIGH);
   // close current SPI transaction
   m_spibus->endTransaction();
+#endif
+  regAddress &= ~DPS310__SPI_RW_MASK;
+  struct mgos_spi_txn txn;
+  memset(&txn, 0, sizeof(txn));
+  txn.cs = -1; /* Using manual CS */
+  txn.mode = 3;
+  txn.freq = DPS310__SPI_MAX_FREQ;
+  uint8_t tx_data[2] = {(uint8_t)(regAddress | DPS310__SPI_WRITE_CMD), data};
+  txn.hd.tx_data = tx_data;
+  txn.hd.tx_len = 2;
+  mgos_gpio_write(m_chipSelect, false);
+  bool ok = mgos_spi_run_txn(m_spibus, false /* full_duplex */, &txn);
+  mgos_gpio_write(m_chipSelect, true);
+  if (!ok) {
+    return DPS__FAIL_UNKNOWN;
+  }
 
   // check if necessary
   if (check == 0) {
