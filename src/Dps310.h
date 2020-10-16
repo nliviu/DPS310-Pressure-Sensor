@@ -4,24 +4,24 @@
 #include "DpsClass.h"
 #include "util/dps310_config.h"
 
-class Dps310 : public DpsClass
-{
-public:
-  int16_t getContResults(float *tempBuffer, uint8_t &tempCount, float *prsBuffer, uint8_t &prsCount);
+class Dps310 : public DpsClass {
+ public:
+  int16_t getContResults(float *tempBuffer, uint8_t &tempCount,
+                         float *prsBuffer, uint8_t &prsCount);
 
   /**
    * @brief Set the source of interrupt (FIFO full, measurement values ready)
-   * 
+   *
    * @param intr_source Interrupt source as defined by Interrupt_source_310_e
-   * @param polarity 
-   * @return status code 
+   * @param polarity
+   * @return status code
    */
   int16_t setInterruptSources(uint8_t intr_source, uint8_t polarity = 1);
 
-protected:
+ protected:
   uint8_t m_tempSensor;
 
-  //compensation coefficients
+  // compensation coefficients
   int32_t m_c0Half;
   int32_t m_c1;
 
